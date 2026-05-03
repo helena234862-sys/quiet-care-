@@ -1,0 +1,890 @@
+export type User = {
+  id: string
+  email: string
+  name: string
+  premium: boolean
+  created_at: string
+}
+
+export type Routine = {
+  id: string
+  user_id: string
+  title: string
+  description: string
+  icon: string
+  created_at: string
+}
+
+export type Download = {
+  id: string
+  title: string
+  description: string
+  locked: boolean
+  file_url: string | null
+  created_at: string
+}'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+
+const pastel = {
+  pink: '#F7C8D0',
+  purple: '#D8C7FF',
+  blue: '#CDE7FF',
+  beige: '#F5E9DA',
+}
+
+export default function Home() {
+  return (
+    <main style={{ minHeight: '100vh', background: '#FFFDF9' }}>
+      {/* Hero Section */}
+      <section
+        style={{
+          padding: '60px 20px',
+          textAlign: 'center',
+          background: `linear-gradient(135deg, ${pastel.pink}40, ${pastel.purple}40)`,
+        }}
+      >
+        <h2 style={{ fontSize: '36px', marginBottom: '10px' }}>
+          ابدئي يومك بهدوء 🌿
+        </h2>
+        <p style={{ fontSize: '18px', color: '#666' }}>
+          تنظيم + تطوير + راحة نفسية
+        </p>
+        <div style={{ marginTop: '30px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <Link href="/routines">
+            <button
+              style={{
+                padding: '12px 24px',
+                background: pastel.pink,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              استكشف الروتينات
+            </button>
+          </Link>
+          <Link href="/downloads">
+            <button
+              style={{
+                padding: '12px 24px',
+                background: pastel.purple,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              التحميلات
+            </button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section style={{ padding: '40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h3 style={{ textAlign: 'center', marginBottom: '30px' }}>
+          لماذا Quiet Care؟
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+          {[
+            { icon: '📋', title: 'روتينات يومية', desc: 'خطط يومك بذكاء' },
+            { icon: '📚', title: 'مواد تعليمية', desc: 'محتوى حصري للعضوات' },
+            { icon: '✨', title: 'تطوير شخصي', desc: 'نمي مهاراتك معنا' },
+          ].map((feature, i) => (
+            <div
+              key={i}
+              style={{
+                padding: '20px',
+                borderRadius: '12px',
+                background: pastel.beige,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>
+                {feature.icon}
+              </div>
+              <h4>{feature.title}</h4>
+              <p>{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ textAlign: 'center', padding: '20px', background: '#f0f0f0' }}>
+        <p>🌸 Quiet Care - Built with love | 2026</p>
+      </footer>
+    </main>
+  )
+}'use client'
+
+import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      router.push('/')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
+      <h2>تسجيل الدخول</h2>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="البريد الإلكتروني"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+          required
+        />
+        <input
+          type="password"
+          placeholder="كلمة المرور"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+          required
+        />
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
+        >
+          {loading ? 'جاري التسجيل...' : 'دخول'}
+        </button>
+      </form>
+    </div>
+  )
+}NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key-- جدول المستخدمين
+CREATE TABLE users (
+  id UUID PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  premium BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- جدول الروتينات
+CREATE TABLE routines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id),
+  title TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- جدول التحميلات
+CREATE TABLE downloads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT,
+  locked BOOLEAN DEFAULT FALSE,
+  file_url TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);import { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+
+const pastel = {
+  pink: '#F7C8D0',
+  purple: '#D8C7FF',
+  blue: '#CDE7FF',
+  beige: '#F5E9DA',
+}
+
+export default function Home() {
+  return (
+    <main style={{ minHeight: '100vh', background: '#FFFDF9' }}>
+      {/* Hero Section */}
+      <section
+        style={{
+          padding: '60px 20px',
+          textAlign: 'center',
+          background: `linear-gradient(135deg, ${pastel.pink}40, ${pastel.purple}40)`,
+        }}
+      >
+        <h2 style={{ fontSize: '36px', marginBottom: '10px' }}>
+          ابدئي يومك بهدوء 🌿
+        </h2>
+        <p style={{ fontSize: '18px', color: '#666' }}>
+          تنظيم + تطوير + راحة نفسية
+        </p>
+        <div style={{ marginTop: '30px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <Link href="/routines">
+            <button
+              style={{
+                padding: '12px 24px',
+                background: pastel.pink,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              استكشف الروتينات
+            </button>
+          </Link>
+          <Link href="/downloads">
+            <button
+              style={{
+                padding: '12px 24px',
+                background: pastel.purple,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              التحميلات
+            </button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section style={{ padding: '40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h3 style={{ textAlign: 'center', marginBottom: '30px' }}>
+          لماذا Quiet Care؟
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+          {[
+            { icon: '📋', title: 'روتينات يومية', desc: 'خطط يومك بذكاء' },
+            { icon: '📚', title: 'مواد تعليمية', desc: 'محتوى حصري للعضوات' },
+            { icon: '✨', title: 'تطوير شخصي', desc: 'نمي مهاراتك معنا' },
+          ].map((feature, i) => (
+            <div
+              key={i}
+              style={{
+                padding: '20px',
+                borderRadius: '12px',
+                background: pastel.beige,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>
+                {feature.icon}
+              </div>
+              <h4>{feature.title}</h4>
+              <p>{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ textAlign: 'center', padding: '20px', background: '#f0f0f0' }}>
+        <p>🌸 Quiet Care - Built with love | 2026</p>
+      </footer>
+    </main>
+  )
+}NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_keyimport { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_keyNEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_keyNEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_keyimport { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+
+const pastel = {
+  pink: '#F7C8D0',
+  purple: '#D8C7FF',
+  blue: '#CDE7FF',
+  beige: '#F5E9DA',
+}
+
+export default function Home() {
+  return (
+    <main style={{ minHeight: '100vh', background: '#FFFDF9' }}>
+      {/* Hero Section */}
+      <section
+        style={{
+          padding: '60px 20px',
+          textAlign: 'center',
+          background: `linear-gradient(135deg, ${pastel.pink}40, ${pastel.purple}40)`,
+        }}
+      >
+        <h2 style={{ fontSize: '36px', marginBottom: '10px' }}>
+          ابدئي يومك بهدوء 🌿
+        </h2>
+        <p style={{ fontSize: '18px', color: '#666' }}>
+          تنظيم + تطوير + راحة نفسية
+        </p>
+        <div style={{ marginTop: '30px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <Link href="/routines">
+            <button
+              style={{
+                padding: '12px 24px',
+                background: pastel.pink,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              استكشف الروتينات
+            </button>
+          </Link>
+          <Link href="/downloads">
+            <button
+              style={{
+                padding: '12px 24px',
+                background: pastel.purple,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              التحميلات
+            </button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section style={{ padding: '40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h3 style={{ textAlign: 'center', marginBottom: '30px' }}>
+          لماذا Quiet Care؟
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+          {[
+            { icon: '📋', title: 'روتينات يومية', desc: 'خطط يومك بذكاء' },
+            { icon: '📚', title: 'مواد تعليمية', desc: 'محتوى حصري للعضوات' },
+            { icon: '✨', title: 'تطوير شخصي', desc: 'نمي مهاراتك معنا' },
+          ].map((feature, i) => (
+            <div
+              key={i}
+              style={{
+                padding: '20px',
+                borderRadius: '12px',
+                background: pastel.beige,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>
+                {feature.icon}
+              </div>
+              <h4>{feature.title}</h4>
+              <p>{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ textAlign: 'center', padding: '20px', background: '#f0f0f0' }}>
+        <p>🌸 Quiet Care - Built with love | 2026</p>
+      </footer>
+    </main>
+  )
+}-- جدول المستخدمين
+CREATE TABLE users (
+  id UUID PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  premium BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- جدول الروتينات
+CREATE TABLE routines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id),
+  title TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- جدول التحميلات
+CREATE TABLE downloads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT,
+  locked BOOLEAN DEFAULT FALSE,
+  file_url TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);'use client'
+
+import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      router.push('/')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
+      <h2>تسجيل الدخول</h2>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="البريد الإلكتروني"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+          required
+        />
+        <input
+          type="password"
+          placeholder="كلمة المرور"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+          required
+        />
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
+        >
+          {loading ? 'جاري التسجيل...' : 'دخول'}
+        </button>
+      </form>
+    </div>
+  )
+}export type User = {
+  id: string
+  email: string
+  name: string
+  premium: boolean
+  created_at: string
+}
+
+export type Routine = {
+  id: string
+  user_id: string
+  title: string
+  description: string
+  icon: string
+  created_at: string
+}
+
+export type Download = {
+  id: string
+  title: string
+  description: string
+  locked: boolean
+  file_url: string | null
+  created_at: string
+}# 1. أضف كل الملفات
+git add .
+
+# 2. اعمل commit
+git commit -m "Initial Quiet Care setup with Next.js 14 and Supabase"
+
+# 3. ادفع للـ GitHub
+git push origin main
+
+# 4. انشر على Vercel
+# - اذهب إلى vercel.com
+# - اختر Import
+# - اختر quiet-care repository
+# - أضف البيئة variables (NEXT_PUBLIC_SUPABASE_URL و NEXT_PUBLIC_SUPABASE_ANON_KEY)
+# - Deploy!node_modules/
+.env.local
+.env.*.local
+.next/
+out/
+build/
+.DS_Store'use client'
+
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
+import type { Routine } from '@/lib/types'
+
+export default function RoutinesPage() {
+  const [routines, setRoutines] = useState<Routine[]>([])
+
+  useEffect(() => {
+    const fetchRoutines = async () => {
+      const { data } = await supabase
+        .from('routines')
+        .select('*')
+        .limit(10)
+
+      if (data) setRoutines(data)
+    }
+
+    fetchRoutines()
+  }, [])
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <h2>روتينات يومية</h2>
+      <ul>
+        <li>☀️ صباح: ماء + تخطيط يومك</li>
+        <li>📚 دراسة: 25 دقيقة تركيز</li>
+        <li>🌙 ليل: إغلاق الهاتف وراحة</li>
+      </ul>
+
+      <h3>روتينات من Supabase:</h3>
+      {routines.length > 0 ? (
+        routines.map((routine) => (
+          <div key={routine.id} style={{ padding: '10px', border: '1px solid #ccc', margin: '10px 0' }}>
+            <h4>{routine.title}</h4>
+            <p>{routine.description}</p>
+          </div>
+        ))
+      ) : (
+        <p>لا توجد روتينات بعد</p>
+      )}
+    </div>
+  )
+}import type { Metadata } from 'next'
+import Header from '@/components/Header'
+import './globals.css'
+
+export const metadata: Metadata = {
+  title: 'Quiet Care - ركن الهدوء',
+  description: 'تطبيق تنظيم وتطوير شخصي',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="ar" dir="rtl">
+      <body>
+        <Header />
+        {children}
+      </body>
+    </html>
+  )
+}'use client'
+
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
+
+export default function Header() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
+    getUser()
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
+
+  const pastel = {
+    pink: '#F7C8D0',
+    purple: '#D8C7FF',
+    blue: '#CDE7FF',
+  }
+
+  return (
+    <header
+      style={{
+        padding: '20px',
+        background: `linear-gradient(90deg, ${pastel.pink}, ${pastel.purple}, ${pastel.blue})`,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+    >
+      <div>
+        <h1>🌸 Quiet Care</h1>
+        <p>مكانك الهادئ وسط الحياة</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px' }}>
+        {!loading && !user ? (
+          <>
+            <Link href="/login">
+              <button>تسجيل دخول</button>
+            </Link>
+            <Link href="/signup">
+              <button>إنشاء حساب</button>
+            </Link>
+          </>
+        ) : (
+          <>
+            <span>مرحباً {user?.email}</span>
+            <button onClick={handleLogout}>خروج</button>
+          </>
+        )}
+      </div>
+    </header>
+  )
+}# 1. استنساخ المستودع الفارغ
+git clone https://github.com/helena234862-sys/quiet-care.git
+cd quiet-care
+
+# 2. إنشاء Next.js مباشرة
+npx create-next-app@latest . --app --typescript --no-git
+
+# 3. تثبيت المكتبات
+npm install @supabase/supabase-js @supabase/auth-helpers-nextjs @supabase/auth-ui-react @supabase/auth-ui-shared🌸 1) هيكلة الموقع (الأقسام الأساسية)
+🏠 الصفحة الرئيسية
+لازم تكون هادئة جدًا (أول انطباع مهم):
+جملة ترحيب لطيفة (مثل: “هنا مكانك الهادئ وسط الضجيج”)
+أزرار واضحة:
+ابدأ هنا
+الروتينات
+التحميلات
+الاشتراك المدفوع
+🌿 قسم الروتينات
+محتوى يومي بسيط:
+روتين صباح لطيف ☀️
+روتين دراسة 📚
+روتين قبل النوم 🌙
+“كيف أكون أكثر هدوءًا؟”
+هذا القسم يجذب زيارات يومية لأنه يتجدد ويُشارك.
+📒 قسم التحميلات (Free + Paid)
+هنا السر 💰:
+المجاني:
+Planner أسبوعي بسيط
+قائمة أهداف يومية
+صفحات تنظيم الوقت
+خلفيات هاتف هادئة
+المدفوع:
+Planner احترافي كامل (شهر + سنة)
+“دفتر تطوير الذات للبنات”
+جداول دراسة ذكية (امتحانات)
+Pack كامل PDF تصميم أنيق
+🌼 قسم التحديات
+تحدي 7 أيام بدون تشتت
+تحدي قراءة
+تحدي تنظيم الغرفة
+تحدي “أنا أهدأ نسخة مني”
+هذا القسم يجعل الناس ترجع للموقع باستمرار.
+💬 قسم الإلهام
+اقتباسات يومية
+قصص قصيرة محفزة
+“رسالة لك اليوم”
+👑 قسم الاشتراك المدفوع (Premium)
+هذا أهم جزء:
+ما يحتويه:
+كل التحميلات المدفوعة
+ملفات حصرية كل شهر
+تصميمات جديدة باستمرار
+مكتبة كاملة PDF
+دعم أو نصائح شخصية بسيطة (اختياري)
+شكل الاشتراك:
+شهري 💵
+أو سنوي أرخص 💵
+🎨 2) الألوان (Pastel Palette)
+مهم جدًا أنك تبقيها “هادئة وناعمة”:
+🎀 الألوان الأساسية:
+وردي باستيل: #F7C8D0
+بنفسجي فاتح: #D8C7FF
+أزرق سماوي خفيف: #CDE7FF
+بيج دافئ: #F5E9DA
+أبيض ناعم: #FFFFFF
+⚡ الاستخدام:
+الخلفية: أبيض + لمسة بيج
+الأزرار: وردي أو بنفسجي
+العناوين: بنفسجي غامق خفيف
+الخط: بسيط وناعم (مثل: Poppins أو Cairo)
+💰 3) نموذج الربح (ببساطة)
+البداية:
+محتوى مجاني + ملفات مجانية → لجذب الناس
+بعد النمو:
+منتجات PDF مدفوعة
+اشتراك Premium
+إعلانات (لاحقًا فقط)
+⚡ 4) أهم سر نجاح الموقع
+مش التصميم… بل:
+الاستمرارية + الإحساس + البساطة
+لو موقعك يعطي “راحة نفسية”، الناس ترجع له حتى لو محتواه بسيط.🚀 🌸 خوارزمية إنشاء موقع “ركن الهدوء” (Full Build Algorithm)
+🧱 1) إنشاء المشروع
+Bash
+CREATE NEXT.JS PROJECT
+name: calm-corner
+أو إذا تستخدمين Vite/Next:
+Bash
+npx create-next-app@latest calm-corner
+cd calm-corner
+npm install
+📁 2) إنشاء هيكلة الملفات
+Plain text
+/app
+  page.tsx              → الصفحة الرئيسية
+  /routines
+    page.tsx            → الروتينات
+  /downloads
+    page.tsx           → التحميلات
+  /premium
+    page.tsx           → الاشتراك
+  /login
+    page.tsx           → تسجيل الدخول
+
+/components
+  Navbar.tsx
+  Hero.tsx
+  Card.tsx
+
+/lib
+  supabase.ts
+🎨 3) تشغيل التصميم (Tailwind)
+Bash
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+ثم في tailwind.config.js:
+JavaScript
+content: ["./app/**/*.{js,ts,jsx,tsx}"],
+🌸 4) إعداد الألوان الباستيل
+في globals.css:
+CSS
+body {
+  background: #fffdf9;
+  font-family: sans-serif;
+}
+🧠 5) منطق الصفحة الرئيسية (Core Logic)
+Pseudo
+ON PAGE LOAD:
+
+SHOW Hero Section
+SHOW Routines Preview
+SHOW Downloads Preview
+
+IF user_logged_in == false:
+    SHOW "Sign Up Button"
+
+IF user_logged_in == true:
+    LOAD user data
+    CHECK premium status
+👤 6) نظام تسجيل الدخول (Supabase)
+Bash
+npm install @supabase/supabase-js
+ثم:
+Pseudo
+INIT supabase client
+
+FUNCTION login(email, password):
+    AUTHENTICATE user
+    RETURN session
+
+FUNCTION register(email, password):
+    CREATE user in database
+    SET premium = false
+💰 7) نظام Premium
+Pseudo
+WHEN user clicks premium content:
+
+IF user.premium == true:
+    ALLOW download
+ELSE:
+    SHOW payment page
+📥 8) نظام التحميلات
+Pseudo
+FOR each file in downloads:
+
+IF file.type == "free":
+    SHOW download button
+
+IF file.type == "premium":
+    IF user.premium == true:
+        SHOW download button
+    ELSE:
+        LOCK content
+🌿 9) الروتينات اليومية
+Pseudo
+ON DAILY LOAD:
+
+SELECT routine FROM database WHERE type = today
+
+DISPLAY:
+- morning routine
+- study routine
+- night routine
+💳 10) الدفع (لاحقًا)
+Pseudo
+WHEN user subscribes:
+
+SEND to Stripe/Gumroad
+
+IF payment_success:
+    UPDATE user.premium = true
+🚀 11) النشر النهائي
+Bash
+git init
+git add .
+git commit -m "first version"
+git branch -M main
+git remote add origin <github repo>
+git push -u origin main
+ثم:
+Pseudo
+CONNECT project to Vercel
+CLICK Deploy
+GET live URL
